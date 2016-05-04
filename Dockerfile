@@ -1,7 +1,5 @@
-FROM resin/%%RESIN_MACHINE_NAME%%-node:latest
+FROM hypriot/rpi-node:latest
 
-## uncomment if you want systemd
-# ENV INITSYSTEM on
 
 # Install apt deps
 RUN apt-get update && apt-get install -y \
