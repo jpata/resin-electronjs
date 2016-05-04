@@ -48,14 +48,17 @@ RUN echo "#!/bin/sh\n\nexec /usr/bin/X -s 0 dpms -nocursor -nolisten tcp "$@"" >
 # Set npm
 RUN npm config set unsafe-perm true
 
+RUN mkdir -p ./root/app/
+
 # Move package to filesystem
-COPY ./package.json ./app/
+COPY ./package.json ./root/app/
 
 # NPM i app
-RUN npm i  --prefix /app
+RUN npm i --prefix /root/app
 
 # Move app to filesystem
-COPY . ./app
+COPY . ./root/app
+COPY 10-input.conf /etc/X11/xorg.conf.d/10-input.conf
 
 # Start app
-CMD ["bash", "/app/start.sh"]
+CMD ["bash", "/root/app/start.sh"]

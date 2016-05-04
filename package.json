@@ -1,5 +1,8 @@
 {
   "name"    : "menus-demo",
   "version" : "0.1.0",
-  "main"    : "main.js"
+  "main"    : "main.js",
+  "dependencies": {
+    "electron-prebuilt": "^0.37.0"
+  }
 }

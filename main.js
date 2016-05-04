@@ -26,7 +26,7 @@ app.on('ready', function() {
 
   var application_menu = [
     {
-      label: 'menu1',
+      label: 'mymenu1',
       submenu: [
         {
           label: 'Undo',
