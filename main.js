@@ -1,72 +1,121 @@
-(function() {
-  'use strict';
-  // since we control the whole environment, we can safely use ES6 syntax:
-  const electron = require('electron');
-  const app = electron.app;
-  const BrowserWindow = electron.BrowserWindow;
+var app = require('app');  // Module to control application life.
+var BrowserWindow = require('browser-window');  // Module to create native browser window.
+var Menu = require('menu');
 
-  // simple parameters initialization
-  let window = null;
-  let resin_toolbar = false;
-  let resin_kiosk = false;
-  let resin_node = true;
+// Report crashes to our server.
+require('crash-reporter').start();
 
+// Keep a global reference of the window object, if you don't, the window will
+// be closed automatically when the javascript object is GCed.
+var mainWindow = null;
 
-  // enable touch events if your device supports them
-  if (process.env.URL_LAUNCHER_TOUCH && process.env.URL_LAUNCHER_TOUCH === "true") {
-    app.commandLine.appendSwitch("--touch-devices");
-  }
-  // simulate touch events - might be useful for touchscreen with partial driver support
-  if (process.env.URL_LAUNCHER_TOUCH_SIMULATE && process.env.URL_LAUNCHER_TOUCH_SIMULATE === "true") {
-    app.commandLine.appendSwitch("--simulate-touch-screen-with-mouse");
-  }
+// Quit when all windows are closed.
+app.on('window-all-closed', function() {
+  if (process.platform != 'darwin')
+    app.quit();
+});
 
-  /*
-    we initialize our application display as a callback of the electronJS "ready" event
-  */
-  app.on('ready', function() {
+// This method will be called when Electron has done everything
+// initialization and ready for creating browser windows.
+app.on('ready', function() {
+  // Create the browser window.
+  mainWindow = new BrowserWindow({width: 800, height: 600});
 
-      if (process.env.URL_LAUNCHER_FRAME && process.env.URL_LAUNCHER_FRAME === "false") {
-        resin_toolbar = false;
-      }
-      if (process.env.URL_LAUNCHER_KIOSK && process.env.URL_LAUNCHER_KIOSK === "true") {
-        resin_kiosk = true;
-      }
-      if (process.env.URL_LAUNCHER_NODE && process.env.URL_LAUNCHER_NODE === "false") {
-        resin_node = false;
-      }
+  // and load the index.html of the app.
+  mainWindow.loadUrl('file://' + __dirname + '/index.html');
 
-      // here we actually configure the behavour of electronJS
-      window = new BrowserWindow({
-        width: parseInt(process.env.URL_LAUNCHER_WIDTH || 1920),
-        height: parseInt(process.env.URL_LAUNCHER_HEIGHT || 1080),
-        frame: resin_toolbar,
-        title: process.env.URL_LAUNCHER_TITLE || "RESIN.IO",
-        kiosk: resin_kiosk,
-        webPreferences: {
-          experimentalFeatures: true,
-          overlayScrollbars: true,
-          overlayFullscreenVideo: true,
-          nodeIntegration: resin_node
+  var application_menu = [
+    {
+      label: 'menu1',
+      submenu: [
+        {
+          label: 'Undo',
+          accelerator: 'CmdOrCtrl+Z',
+          role: 'undo'
+        },
+        {
+          label: 'Open',
+          accelerator: 'CmdOrCtrl+O',
+          click: function() { 
+            require('electron').dialog.showOpenDialog({ properties: [ 'openFile', 'openDirectory', 'multiSelections' ]});
+          }
+        },
+        {
+          label: 'submenu1',
+          submenu: [
+            {
+              label: 'item1',
+              accelerator: 'CmdOrCtrl+A',
+              click: function() {
+                mainWindow.openDevTools();
+              }
+            },
+            {
+              label: 'item2',
+              accelerator: 'CmdOrCtrl+B',
+              click: function() {
+                mainWindow.closeDevTools();
+              }
+            }
+          ]
         }
-      });
+      ]
+    }
+  ];
+  if (process.platform == 'darwin') {
+    var name = require('electron').app.getName();
+    application_menu.unshift({
+      label: name,
+      submenu: [
+        {
+          label: 'About ' + name,
+          role: 'about'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Services',
+          role: 'services',
+          submenu: []
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Hide ' + name,
+          accelerator: 'Command+H',
+          role: 'hide'
+        },
+        {
+          label: 'Hide Others',
+          accelerator: 'Command+Shift+H',
+          role: 'hideothers'
+        },
+        {
+          label: 'Show All',
+          role: 'unhide'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Quit',
+          accelerator: 'Command+Q',
+          click: function() { app.quit(); }
+        },
+      ]
+    });
+  }
 
-      window.webContents.on('did-finish-load', function() {
-        // The flash of white is still present for a very short
-        // while after the WebView reports it finished loading
-        // taken from etcher - https://goo.gl/n5X0gY )
-        setTimeout(function() {
-          window.show();
-        }, 100);
-
-      });
-
-      // if the env-var is set to true, a portion of the screen will be dedicated to the chrome-dev-tools
-      if (process.env.URL_LAUNCHER_CONSOLE && process.env.URL_LAUNCHER_CONSOLE === "true") {
-        window.openDevTools();
-      }
-
-      // the big red button, here we go
-      window.loadURL(process.env.URL_LAUNCHER_URL || "file:///app/app/index.html");
+  menu = Menu.buildFromTemplate(application_menu);
+  Menu.setApplicationMenu(menu);
+  
+  // Emitted when the window is closed.
+  mainWindow.on('closed', function() {
+    // Dereference the window object, usually you would store windows
+    // in an array if your app supports multi windows, this is the time
+    // when you should delete the corresponding element.
+    mainWindow = null;
   });
-})();
+});
